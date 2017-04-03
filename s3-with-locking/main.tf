@@ -9,7 +9,6 @@ resource "aws_dynamodb_table" "terraform-state-locktable" {
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "LockID"
-  range_key      = "LockID"
 
   attribute {
     name = "LockID"
