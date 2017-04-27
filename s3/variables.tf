@@ -4,6 +4,7 @@ variable "project" {
 
 variable "environment" {
   description = "Environment name"
+  default     = ""
 }
 
 variable "create_dynamodb_lock_table" {

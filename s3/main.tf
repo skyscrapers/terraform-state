@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "state" {
   count  = "${var.create_s3_bucket == "true" ? 1 : 0}"
-  bucket = "terraform-state-${var.project}-${var.environment}"
+  bucket = "terraform-state-${var.project}${data.template_file.environment_suffix.rendered}"
   acl    = "private"
 
   versioning {
@@ -8,7 +8,7 @@ resource "aws_s3_bucket" "state" {
   }
 
   tags {
-    Name        = "terraform-state-${var.project}-${var.environment}"
+    Name        = "terraform-state-${var.project}${data.template_file.environment_suffix.rendered}"
     Environment = "${var.environment}"
     Project     = "${var.project}"
   }
@@ -85,7 +85,7 @@ EOF
 
 resource "aws_dynamodb_table" "terraform-state-locktable" {
   count          = "${var.create_dynamodb_lock_table == "true" ? 1 : 0}"
-  name           = "terraform-state-lock-${var.project}-${var.environment}"
+  name           = "terraform-state-lock-${var.project}${data.template_file.environment_suffix.rendered}"
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "LockID"
@@ -96,8 +96,16 @@ resource "aws_dynamodb_table" "terraform-state-locktable" {
   }
 
   tags {
-    Name        = "terraform-state-lock-${var.project}-${var.environment}"
+    Name        = "terraform-state-lock-${var.project}${data.template_file.environment_suffix.rendered}"
     Environment = "${var.environment}"
     Project     = "${var.project}"
+  }
+}
+
+data "template_file" "environment_suffix" {
+  template = "$${suffix}"
+
+  vars {
+    suffix = "${length(var.environment) > 0 ? format("-%s", var.environment) : ""}"
   }
 }
