@@ -51,7 +51,7 @@ EOF
 }
 
 resource "aws_dynamodb_table" "terraform-state-locktable" {
-  count          = "${var.dynamodb_lock_table == "true" ? 1 : 0}"
+  count          = "${var.create_dynamodb_lock_table == "true" ? 1 : 0}"
   name           = "terraform-state-lock-${var.project}-${var.environment}"
   read_capacity  = 1
   write_capacity = 1
