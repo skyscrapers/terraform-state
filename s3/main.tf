@@ -49,3 +49,22 @@ resource "aws_s3_bucket_policy" "b" {
 }
 EOF
 }
+
+resource "aws_dynamodb_table" "terraform-state-locktable" {
+  count          = "${var.create_dynamodb_lock_table == "true" ? 1 : 0}"
+  name           = "terraform-state-lock-${var.project}-${var.environment}"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+
+  tags {
+    Name        = "terraform-state-lock-${var.project}-${var.environment}"
+    Environment = "${var.environment}"
+    Project     = "${var.project}"
+  }
+}
