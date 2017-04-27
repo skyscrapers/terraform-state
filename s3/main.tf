@@ -50,6 +50,39 @@ resource "aws_s3_bucket_policy" "b" {
 EOF
 }
 
+resource "aws_s3_bucket_policy" "cross_account_bucket_sharing" {
+  count  = "${length(var.shared_aws_account_ids) > 0 ? 1 : 0}"
+  bucket = "${aws_s3_bucket.state.bucket}"
+
+  policy = <<EOF
+{
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Sid": "Shared bucket permissions",
+         "Effect": "Allow",
+         "Principal": {
+            "AWS": [ ${join(formatlist("\"arn:aws:iam::%s:root\"", var.shared_aws_account_ids), ",")} ]
+         },
+         "Action": [
+            "s3:GetBucketLocation",
+            "s3:ListBucket",
+            "s3:GetObject*",
+            "s3:PutObject*"
+         ],
+         "Resource": [
+            "${aws_s3_bucket.state.bucket}",
+            "${aws_s3_bucket.state.bucket}/*"
+         ]
+      },
+      {
+
+      }
+   ]
+}
+EOF
+}
+
 resource "aws_dynamodb_table" "terraform-state-locktable" {
   count          = "${var.create_dynamodb_lock_table == "true" ? 1 : 0}"
   name           = "terraform-state-lock-${var.project}-${var.environment}"
