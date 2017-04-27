@@ -45,42 +45,38 @@ resource "aws_s3_bucket_policy" "b" {
           "s3:x-amz-server-side-encryption": "true"
         }
       }
-    }
+    }${join("", data.template_file.cross_account_bucket_sharing_policy.*.rendered)}
   ]
 }
 EOF
 }
 
-resource "aws_s3_bucket_policy" "cross_account_bucket_sharing" {
-  count  = "${length(var.shared_aws_account_ids) > 0 && var.create_s3_bucket == "true" ? 1 : 0}"
-  bucket = "${aws_s3_bucket.state.bucket}"
-  policy = <<EOF
-{
-   "Version": "2012-10-17",
-   "Statement": [
-      {
-         "Sid": "Shared bucket permissions",
-         "Effect": "Allow",
-         "Principal": {
-            "AWS": [ ${join(formatlist("\"arn:aws:iam::%s:root\"", var.shared_aws_account_ids), ",")} ]
-         },
-         "Action": [
-            "s3:GetBucketLocation",
-            "s3:ListBucket",
-            "s3:GetObject*",
-            "s3:PutObject*"
-         ],
-         "Resource": [
-            "${aws_s3_bucket.state.bucket}",
-            "${aws_s3_bucket.state.bucket}/*"
-         ]
-      },
-      {
-
-      }
+data "template_file" "cross_account_bucket_sharing_policy" {
+  count    = "${length(var.shared_aws_account_ids) > 0 && var.create_s3_bucket == "true" ? 1 : 0}"
+  template = <<EOF
+,{
+   "Sid": "Shared bucket permissions",
+   "Effect": "Allow",
+   "Principal": {
+      "AWS": [ $${principal_aws} ]
+   },
+   "Action": [
+      "s3:GetBucketLocation",
+      "s3:ListBucket",
+      "s3:GetObject*",
+      "s3:PutObject*"
+   ],
+   "Resource": [
+      "$${bucket_arn}",
+      "$${bucket_arn}/*"
    ]
 }
 EOF
+
+  vars {
+    principal_aws = "${join(",", formatlist("\"arn:aws:iam::%s:root\"", var.shared_aws_account_ids))}"
+    bucket_arn    = "${aws_s3_bucket.state.arn}"
+  }
 }
 
 resource "aws_dynamodb_table" "terraform-state-locktable" {
