@@ -1,4 +1,5 @@
 resource "aws_s3_bucket" "state" {
+  count  = "${var.create_s3_bucket == "true" ? 1 : 0}"
   bucket = "terraform-state-${var.project}-${var.environment}"
   acl    = "private"
 
@@ -14,8 +15,8 @@ resource "aws_s3_bucket" "state" {
 }
 
 resource "aws_s3_bucket_policy" "b" {
+  count  = "${var.create_s3_bucket == "true" ? 1 : 0}"
   bucket = "${aws_s3_bucket.state.bucket}"
-
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -51,9 +52,8 @@ EOF
 }
 
 resource "aws_s3_bucket_policy" "cross_account_bucket_sharing" {
-  count  = "${length(var.shared_aws_account_ids) > 0 ? 1 : 0}"
+  count  = "${length(var.shared_aws_account_ids) > 0 && var.create_s3_bucket == "true" ? 1 : 0}"
   bucket = "${aws_s3_bucket.state.bucket}"
-
   policy = <<EOF
 {
    "Version": "2012-10-17",
