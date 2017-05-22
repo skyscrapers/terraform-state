@@ -45,7 +45,7 @@ resource "aws_s3_bucket_policy" "b" {
           "s3:x-amz-server-side-encryption": "true"
         }
       }
-    }${length(data.template_file.cross_account_bucket_sharing_policy.*.rendered) == 0 ? "" : join("", data.template_file.cross_account_bucket_sharing_policy.*.rendered)}
+    }${length(data.template_file.cross_account_bucket_sharing_policy.*.rendered) == 0 ? format("%s","") : format("%s", join("", data.template_file.cross_account_bucket_sharing_policy.*.rendered))}
   ]
 }
 EOF
