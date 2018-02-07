@@ -1,7 +1,7 @@
 output "bucket_id" {
-  value = "${aws_s3_bucket.state.id}"
+  value = "${join("", aws_s3_bucket.state.*.id)}"
 }
 
 output "locktable_id" {
-  value = "${aws_dynamodb_table.terraform-state-locktable.id}"
+  value = "${join("", aws_dynamodb_table.terraform-state-locktable.*.id)}"
 }
