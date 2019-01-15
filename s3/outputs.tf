@@ -5,5 +5,5 @@ output "bucket_id" {
 
 output "locktable_id" {
   description = "Id (name) of the DynamoDB lock table"
-  value       = "${join("", aws_dynamodb_table.terraform-state-locktable.*.id)}"
+  value       = "${join("", aws_dynamodb_table.terraform_state_locktable.*.id)}"
 }

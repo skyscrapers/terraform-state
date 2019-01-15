@@ -80,7 +80,7 @@ EOF
   }
 }
 
-resource "aws_dynamodb_table" "terraform-remote-state-locktable" {
+resource "aws_dynamodb_table" "terraform_state_locktable" {
   count          = "${var.create_dynamodb_lock_table == "true" ? 1 : 0}"
   name           = "terraform-remote-state-lock-${var.project}"
   read_capacity  = 1
