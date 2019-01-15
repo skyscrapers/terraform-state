@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "state" {
   count  = "${var.create_s3_bucket == "true" ? 1 : 0}"
-  bucket = "terraform-state-${var.project}${data.template_file.environment_suffix.rendered}"
+  bucket = "terraform-remote-state-${var.project}"
   acl    = "private"
 
   versioning {
@@ -8,15 +8,15 @@ resource "aws_s3_bucket" "state" {
   }
 
   tags {
-    Name        = "terraform-state-${var.project}${data.template_file.environment_suffix.rendered}"
-    Environment = "${var.environment}"
-    Project     = "${var.project}"
+    Name    = "terraform-remote-state-${var.project}"
+    Project = "${var.project}"
   }
 }
 
 resource "aws_s3_bucket_policy" "b" {
   count  = "${var.create_s3_bucket == "true" ? 1 : 0}"
   bucket = "${aws_s3_bucket.state.bucket}"
+
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -52,7 +52,8 @@ EOF
 }
 
 data "template_file" "cross_account_bucket_sharing_policy" {
-  count    = "${length(var.shared_aws_account_ids) > 0 && var.create_s3_bucket == "true" ? 1 : 0}"
+  count = "${length(var.shared_aws_account_ids) > 0 && var.create_s3_bucket == "true" ? 1 : 0}"
+
   template = <<EOF
 ,{
    "Sid": "Shared bucket permissions",
@@ -79,9 +80,9 @@ EOF
   }
 }
 
-resource "aws_dynamodb_table" "terraform-state-locktable" {
+resource "aws_dynamodb_table" "terraform-remote-state-locktable" {
   count          = "${var.create_dynamodb_lock_table == "true" ? 1 : 0}"
-  name           = "terraform-state-lock-${var.project}${data.template_file.environment_suffix.rendered}"
+  name           = "terraform-remote-state-lock-${var.project}"
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "LockID"
@@ -92,16 +93,7 @@ resource "aws_dynamodb_table" "terraform-state-locktable" {
   }
 
   tags {
-    Name        = "terraform-state-lock-${var.project}${data.template_file.environment_suffix.rendered}"
-    Environment = "${var.environment}"
-    Project     = "${var.project}"
-  }
-}
-
-data "template_file" "environment_suffix" {
-  template = "$${suffix}"
-
-  vars {
-    suffix = "${length(var.environment) > 0 ? format("-%s", var.environment) : ""}"
+    Name    = "terraform-remote-state-lock-${var.project}"
+    Project = "${var.project}"
   }
 }
