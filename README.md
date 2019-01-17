@@ -11,17 +11,20 @@ The bucket has an policy where you can only upload files with encryption enabled
 
 | Name | Description | Type | Default | Required |
 |------|-------------|:----:|:-----:|:-----:|
-| create_dynamodb_lock_table | Create a DynamoDB table for state locking. Set to false or 0 to disable. Defaults to true | string | `true` | no |
-| create_s3_bucket | Create the S3 bucket and policy. Set to false of 0 to disable. Defaults to true | string | `true` | no |
-| project | Project name | string | - | yes |
-| shared_aws_account_ids | A list of AWS account IDs to share the S3 bucket and DynamoDB table with. | list | `<list>` | no |
+| create\_dynamodb\_lock\_table | Create a DynamoDB table for state locking. Set to false or 0 to disable. Defaults to true | string | `"true"` | no |
+| create\_s3\_bucket | Create the S3 bucket and policy. Set to false of 0 to disable. Defaults to true | string | `"true"` | no |
+| project | Project name | string | n/a | yes |
+| shared\_aws\_account\_ids | A list of AWS account IDs to share the S3 bucket and DynamoDB table with. | list | `<list>` | no |
 
 ### Output
 
 | Name | Description |
 |------|-------------|
-| bucket_id | Id (name) of the S3 bucket |
-| locktable_id | Id (name) of the DynamoDB lock table |
+| bucket\_id | Id (name) of the S3 bucket |
+| locktable\_id | Id (name) of the DynamoDB lock table |
+| tf\_policy\_arn | The ARN of the policy for Terraform users to access the state and lock table |
+| tf\_policy\_id | The ID of the policy for Terraform users to access the state and lock table |
+| tf\_policy\_name | The name of the policy for Terraform users to access the state and lock table |
 
 ### Example single environment
 
