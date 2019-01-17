@@ -2,11 +2,6 @@ variable "project" {
   description = "Project name"
 }
 
-variable "environment" {
-  description = "Environment name"
-  default     = ""
-}
-
 variable "create_dynamodb_lock_table" {
   description = "Create a DynamoDB table for state locking. Set to false or 0 to disable. Defaults to true"
   default     = "true"
