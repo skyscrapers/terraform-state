@@ -14,7 +14,7 @@ resource "aws_s3_bucket" "state" {
     }
   }
 
-  tags {
+  tags = {
     Name    = "terraform-remote-state-${var.project}"
     Project = "${var.project}"
   }
@@ -76,7 +76,7 @@ resource "aws_dynamodb_table" "terraform_state_locktable" {
     type = "S"
   }
 
-  tags {
+  tags = {
     Name    = "terraform-remote-state-lock-${var.project}"
     Project = "${var.project}"
   }
