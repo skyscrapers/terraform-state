@@ -16,12 +16,12 @@ resource "aws_s3_bucket" "state" {
 
   tags = {
     Name    = "terraform-remote-state-${var.project}"
-    Project = "${var.project}"
+    Project = var.project
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "example" {
-  bucket                  = "${aws_s3_bucket.state.id}"
+  bucket                  = aws_s3_bucket.state.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -29,7 +29,7 @@ resource "aws_s3_bucket_public_access_block" "example" {
 }
 
 resource "aws_s3_bucket_policy" "b" {
-  bucket = "${aws_s3_bucket.state.bucket}"
+  bucket = aws_s3_bucket.state.bucket
 
   policy = <<EOF
 {
@@ -63,13 +63,14 @@ resource "aws_s3_bucket_policy" "b" {
   ]
 }
 EOF
+
 }
 
 resource "aws_dynamodb_table" "terraform_state_locktable" {
-  name           = "terraform-remote-state-lock-${var.project}"
-  read_capacity  = 1
+  name = "terraform-remote-state-lock-${var.project}"
+  read_capacity = 1
   write_capacity = 1
-  hash_key       = "LockID"
+  hash_key = "LockID"
 
   attribute {
     name = "LockID"
@@ -77,7 +78,8 @@ resource "aws_dynamodb_table" "terraform_state_locktable" {
   }
 
   tags = {
-    Name    = "terraform-remote-state-lock-${var.project}"
-    Project = "${var.project}"
+    Name = "terraform-remote-state-lock-${var.project}"
+    Project = var.project
   }
 }
+
