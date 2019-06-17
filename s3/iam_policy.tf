@@ -4,7 +4,7 @@ data "aws_iam_policy_document" "tf" {
       "s3:ListBucket",
     ]
 
-    resources = ["${aws_s3_bucket.state.arn}"]
+    resources = [aws_s3_bucket.state.arn]
   }
 
   statement {
@@ -24,12 +24,13 @@ data "aws_iam_policy_document" "tf" {
       "dynamodb:DeleteItem",
     ]
 
-    resources = ["${aws_dynamodb_table.terraform_state_locktable.arn}"]
+    resources = [aws_dynamodb_table.terraform_state_locktable.arn]
   }
 }
 
 resource "aws_iam_policy" "tf" {
   name        = "terraform-remote-state-${var.project}"
   description = "Policy for Terraform users to access the state and lock table"
-  policy      = "${data.aws_iam_policy_document.tf.json}"
+  policy      = data.aws_iam_policy_document.tf.json
 }
+
