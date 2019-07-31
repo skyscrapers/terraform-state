@@ -27,8 +27,23 @@ The bucket has server-side encryption enabled by default and the bucket policy e
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=3.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=4.0.0"
   project = "some-project"
+}
+```
+
+After applying the module, you can configure your Terraform remote state like this:
+
+```tf
+terraform {
+  backend "s3" {
+    key            = "something" # this should be different for each Terraform configuration / stack you have
+    bucket         = "terraform-remote-state-some-project"
+    region         = "eu-west-1"
+    encrypt        = true
+    dynamodb_table = "terraform-remote-state-lock-some-project"
+    acl            = "bucket-owner-full-control"
+  }
 }
 ```
 
