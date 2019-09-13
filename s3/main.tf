@@ -67,10 +67,9 @@ EOF
 }
 
 resource "aws_dynamodb_table" "terraform_state_locktable" {
-  name = "terraform-remote-state-lock-${var.project}"
-  read_capacity = 1
-  write_capacity = 1
-  hash_key = "LockID"
+  name         = "terraform-remote-state-lock-${var.project}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
 
   attribute {
     name = "LockID"
@@ -78,7 +77,7 @@ resource "aws_dynamodb_table" "terraform_state_locktable" {
   }
 
   tags = {
-    Name = "terraform-remote-state-lock-${var.project}"
+    Name    = "terraform-remote-state-lock-${var.project}"
     Project = var.project
   }
 }
