@@ -61,6 +61,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 | -------- | ------------------------------------------------ | ----- | ------- | :------: |
 | location | Azure region where to deploy the storage account | `any` | n/a     |   yes    |
 | project  | Project name                                     | `any` | n/a     |   yes    |
+| tags     | Additional tags to add to the created resources  | `map` | `{}`    |    no    |
 
 ### Outputs
 
