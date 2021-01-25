@@ -64,6 +64,7 @@ resource "aws_s3_bucket_policy" "b" {
 }
 EOF
 
+  depends_on = [aws_s3_bucket_public_access_block.example]
 }
 
 resource "aws_dynamodb_table" "terraform_state_locktable" {
@@ -81,4 +82,3 @@ resource "aws_dynamodb_table" "terraform_state_locktable" {
     Project = var.project
   }
 }
-
