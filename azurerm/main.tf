@@ -22,6 +22,10 @@ resource "azurerm_storage_account" "terraform_backend" {
   access_tier              = "Hot"
   allow_blob_public_access = false
   tags                     = local.tags
+
+  blob_properties {
+    versioning_enabled = true
+  }
 }
 
 resource "azurerm_storage_container" "terraform_backend" {
