@@ -33,4 +33,3 @@ resource "aws_iam_policy" "tf" {
   description = "Policy for Terraform users to access the state and lock table"
   policy      = data.aws_iam_policy_document.tf.json
 }
-

@@ -22,4 +22,3 @@ output "tf_policy_id" {
   value       = aws_iam_policy.tf.id
   description = "The ID of the policy for Terraform users to access the state and lock table"
 }
-
