@@ -16,16 +16,6 @@ data "aws_iam_policy_document" "tf" {
 
     resources = ["${aws_s3_bucket.state.arn}/*"]
   }
-
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem",
-    ]
-
-    resources = [aws_dynamodb_table.terraform_state_locktable.arn]
-  }
 }
 
 resource "aws_iam_policy" "tf" {

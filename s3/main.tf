@@ -66,19 +66,3 @@ EOF
 
   depends_on = [aws_s3_bucket_public_access_block.example]
 }
-
-resource "aws_dynamodb_table" "terraform_state_locktable" {
-  name         = "terraform-remote-state-lock-${var.project}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Name    = "terraform-remote-state-lock-${var.project}"
-    Project = var.project
-  }
-}

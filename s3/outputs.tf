@@ -3,11 +3,6 @@ output "bucket_id" {
   description = "Id (name) of the S3 bucket"
 }
 
-output "locktable_id" {
-  value       = aws_dynamodb_table.terraform_state_locktable.id
-  description = "Id (name) of the DynamoDB lock table"
-}
-
 output "tf_policy_name" {
   value       = aws_iam_policy.tf.name
   description = "The name of the policy for Terraform users to access the state and lock table"
