@@ -16,15 +16,22 @@ data "aws_iam_policy_document" "tf" {
     resources = ["${aws_s3_bucket.state.arn}/*"]
   }
 
-  # DeleteObject is scoped to lock files only. With use_lockfile, unlock
-  # deletes the <key>.tflock object; OpenTofu never deletes state objects
-  # (workspace deletion would, but Terragrunt does not use workspaces).
+  # DeleteObject is scoped so the real state objects stay immutable, while
+  # the two cases that legitimately delete can:
+  # - *.tflock: with use_lockfile, unlock deletes the <key>.tflock object.
+  # - env:/default-plan/*: the Concourse terragrunt-resource stashes plan
+  #   files in a "default-plan" workspace (the env:/ prefix) and removes
+  #   them after applying. Real Terragrunt state lives at the bare key (no
+  #   workspaces), so it remains undeletable.
   statement {
     actions = [
       "s3:DeleteObject",
     ]
 
-    resources = ["${aws_s3_bucket.state.arn}/*.tflock"]
+    resources = [
+      "${aws_s3_bucket.state.arn}/*.tflock",
+      "${aws_s3_bucket.state.arn}/env:/default-plan/*",
+    ]
   }
 }
 
