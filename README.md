@@ -27,7 +27,7 @@ The bucket has server-side encryption enabled by default and the bucket policy e
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=4.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=6.1.1"
   project = "some-project"
 }
 ```
@@ -78,7 +78,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 
 ```tf
 module "tf_backend_azurerm" {
-  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=5.0.0"
+  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=6.1.1"
   project  = "someproject"
   location = "North Europe"
 }
