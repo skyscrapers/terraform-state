@@ -4,7 +4,7 @@ Everything for state related terraform
 
 ## s3
 
-Create an S3 bucket to store the Terraform state files and a DynamoDB table to support state locking.
+Create an S3 bucket to store the Terraform state files, with native S3 state locking (no DynamoDB table required).
 The bucket has server-side encryption enabled by default and the bucket policy enforces it for all uploads.
 
 ### Available variables
@@ -15,19 +15,18 @@ The bucket has server-side encryption enabled by default and the bucket policy e
 
 ### Output
 
-| Name             | Description                                                                   |
-| ---------------- | ----------------------------------------------------------------------------- |
-| bucket\_id       | Id (name) of the S3 bucket                                                    |
-| locktable\_id    | Id (name) of the DynamoDB lock table                                          |
-| tf\_policy\_arn  | The ARN of the policy for Terraform users to access the state and lock table  |
-| tf\_policy\_id   | The ID of the policy for Terraform users to access the state and lock table   |
-| tf\_policy\_name | The name of the policy for Terraform users to access the state and lock table |
+| Name             | Description                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| bucket\_id       | Id (name) of the S3 bucket                                                              |
+| tf\_policy\_arn  | The ARN of the policy for Terraform users to access the state and S3-native lock files  |
+| tf\_policy\_id   | The ID of the policy for Terraform users to access the state and S3-native lock files   |
+| tf\_policy\_name | The name of the policy for Terraform users to access the state and S3-native lock files |
 
 ### Example
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=4.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=6.1.1"
   project = "some-project"
 }
 ```
@@ -37,19 +36,19 @@ After applying the module, you can configure your Terraform backend like this:
 ```tf
 terraform {
   backend "s3" {
-    key            = "something" # this should be different for each Terraform configuration / stack you have
-    bucket         = "terraform-remote-state-some-project"
-    region         = "eu-west-1"
-    encrypt        = true
-    dynamodb_table = "terraform-remote-state-lock-some-project"
-    acl            = "bucket-owner-full-control"
+    key          = "something" # this should be different for each Terraform configuration / stack you have
+    bucket       = "terraform-remote-state-some-project"
+    region       = "eu-west-1"
+    encrypt      = true
+    use_lockfile = true
+    acl          = "bucket-owner-full-control"
   }
 }
 ```
 
 ### Multi-account AWS Architecture
 
-When running Terraform on a multi-account AWS setup (e.g. an account per environment), it's recommended to setup a single S3 bucket (and DynamoDB lock table) in an "administrative" AWS account for the Terraform state. Please read the [Terraform S3 backend documentation](https://www.terraform.io/docs/backends/types/s3.html#multi-account-aws-architecture) for more information on this topic.
+When running Terraform on a multi-account AWS setup (e.g. an account per environment), it's recommended to setup a single S3 bucket in an "administrative" AWS account for the Terraform state. Please read the [Terraform S3 backend documentation](https://www.terraform.io/docs/backends/types/s3.html#multi-account-aws-architecture) for more information on this topic.
 
 ## azurerm
 
@@ -78,7 +77,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 
 ```tf
 module "tf_backend_azurerm" {
-  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=5.0.0"
+  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=6.1.1"
   project  = "someproject"
   location = "North Europe"
 }
