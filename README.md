@@ -31,7 +31,7 @@ Optionally, the state bucket is replicated to a second bucket in another region 
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.1"
   project = "some-project"
 
   # Required even without replication: alias it to the primary provider.
@@ -88,7 +88,7 @@ provider "aws" {
 }
 
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.1"
   project = "some-project"
 
   replication = {
@@ -104,10 +104,82 @@ module "s3" {
 
 Things to know:
 
-- **Objects that already exist are not replicated.** S3 only replicates objects written after the replication configuration is in place, so an existing state bucket has to be seeded once with an [S3 Batch Replication](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-batch-replication-batch.html) job (or a one-off `aws s3 sync`). Without it, the replica only fills up as each stack writes its state again.
-- Object deletions are never replicated: S3 does not replicate the deletion of a specific object version, and delete markers are only replicated when `replicate_delete_markers` is on. So the replica keeps its copies even if the state bucket is emptied.
-- To recover, point the backend at the replica bucket (`bucket` and `region`) and run `terragrunt init -reconfigure` or `tofu init -reconfigure`.
+- **Objects that already exist are not replicated.** S3 only replicates objects written after the replication configuration is in place, so an existing state bucket has to be seeded once, see [Seeding an existing bucket](#seeding-an-existing-bucket). Without it, the replica only fills up as each stack writes its state again.
+- Object deletions are never replicated: S3 does not replicate the deletion of a specific object version, and delete markers are only replicated when `replicate_delete_markers` is on. So the replica keeps its copies even if the state bucket is emptied. The price is that the replica is not an exact mirror of the state bucket, see [Recovering from the replica](#recovering-from-the-replica).
 - The replica bucket policy names the replication role. IAM is eventually consistent, so a first apply can fail with an "Invalid principal in policy" error; re-running it fixes that.
+
+#### Seeding an existing bucket
+
+Use an [S3 Batch Replication](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-batch-replication-batch.html) job. S3 does the copying itself with the replication role this module created, so you never need credentials that reach both buckets at once, and the copies are marked as replicas. Everything below runs in the source account and region.
+
+Prefer this over `aws s3 sync`, which would need you to widen the replica bucket policy for an identity in the source account, and would pull every state file (secrets included) through the machine running it.
+
+First create a Batch Operations role. This is a second role, next to the replication role, and it is only needed while the job runs:
+
+```sh
+aws iam create-role \
+  --role-name s3-batch-replication-terraform-state \
+  --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"batchoperations.s3.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+
+aws iam put-role-policy \
+  --role-name s3-batch-replication-terraform-state \
+  --policy-name batch-replication \
+  --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:InitiateReplication"],"Resource":["arn:aws:s3:::terraform-remote-state-<project>/*"]},{"Effect":"Allow","Action":["s3:GetReplicationConfiguration","s3:PutInventoryConfiguration"],"Resource":["arn:aws:s3:::terraform-remote-state-<project>"]}]}'
+```
+
+Then start the job. `EnableManifestOutput` and the report are off, so no scratch bucket is needed:
+
+```sh
+aws s3control create-job \
+  --account-id <source-account-id> \
+  --operation '{"S3ReplicateObject":{}}' \
+  --manifest-generator '{"S3JobManifestGenerator":{"ExpectedBucketOwner":"<source-account-id>","SourceBucket":"arn:aws:s3:::terraform-remote-state-<project>","EnableManifestOutput":false,"Filter":{"EligibleForReplication":true,"ObjectReplicationStatuses":["NONE","FAILED"]}}}' \
+  --report '{"Enabled":false}' \
+  --priority 10 \
+  --role-arn arn:aws:iam::<source-account-id>:role/s3-batch-replication-terraform-state \
+  --no-confirmation-required \
+  --description "Seed terraform-state replica"
+
+aws s3control describe-job --account-id <source-account-id> --job-id <job-id> --query 'Job.{Status:Status,Progress:ProgressSummary}'
+```
+
+The generated manifest covers every eligible object version, not just the current ones, which is what you want for a state bucket: the replica keeps the history you would need to roll back.
+
+Once the job reports `Complete`, delete the Batch Operations role again if you would rather not keep it around. Live replication does not use it, so removing it changes nothing about the ongoing copy. Wait for `Complete` first, a job whose role disappears mid-run strands its remaining tasks. The inline policy has to go before the role, otherwise `delete-role` fails with `DeleteConflict`:
+
+```sh
+aws iam delete-role-policy \
+  --role-name s3-batch-replication-terraform-state \
+  --policy-name batch-replication
+
+aws iam delete-role \
+  --role-name s3-batch-replication-terraform-state
+```
+
+#### Recovering from the replica
+
+Point the backend at the replica bucket and its region, then re-initialise:
+
+```tf
+terraform {
+  backend "s3" {
+    key          = "something"
+    bucket       = "terraform-remote-state-some-project-replica"
+    region       = "eu-central-1" # the region of the aws.replica provider
+    encrypt      = true
+    use_lockfile = true
+  }
+}
+```
+
+**Delete the stale lock files first.** Because delete markers are not replicated, every key that was deleted in the state bucket stays live in the replica. That includes the `<key>.tflock` object of each stack: the lock write is replicated, the unlock delete is not. Point a backend at the replica without cleaning up and every stack reads as locked.
+
+```sh
+aws s3api list-objects-v2 --bucket terraform-remote-state-<project>-replica \
+  --query "Contents[?ends_with(Key, '.tflock')].Key" --output text
+```
+
+None of those locks has a live holder, so they are safe to delete. For the same reason the replica also carries the state of stacks that were removed, and the `env:/default-plan/*` plan files that the Concourse terragrunt-resource writes and deletes per run. Both are harmless clutter, but they make the replica look busier than the state bucket: expect noticeably more live objects there than in the source.
 
 ### Multi-account AWS Architecture
 
@@ -140,7 +212,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 
 ```tf
 module "tf_backend_azurerm" {
-  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.0.0"
+  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.0.1"
   project  = "someproject"
   location = "North Europe"
 }
