@@ -31,7 +31,7 @@ Optionally, the state bucket is replicated to a second bucket in another region 
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.1"
   project = "some-project"
 
   # Required even without replication: alias it to the primary provider.
@@ -88,7 +88,7 @@ provider "aws" {
 }
 
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.1"
   project = "some-project"
 
   replication = {
@@ -143,7 +143,18 @@ aws s3control create-job \
 aws s3control describe-job --account-id <source-account-id> --job-id <job-id> --query 'Job.{Status:Status,Progress:ProgressSummary}'
 ```
 
-The generated manifest covers every eligible object version, not just the current ones, which is what you want for a state bucket: the replica keeps the history you would need to roll back. Once the job reports `Complete`, delete the role again if you would rather not keep it around; live replication does not use it.
+The generated manifest covers every eligible object version, not just the current ones, which is what you want for a state bucket: the replica keeps the history you would need to roll back.
+
+Once the job reports `Complete`, delete the Batch Operations role again if you would rather not keep it around. Live replication does not use it, so removing it changes nothing about the ongoing copy. Wait for `Complete` first, a job whose role disappears mid-run strands its remaining tasks. The inline policy has to go before the role, otherwise `delete-role` fails with `DeleteConflict`:
+
+```sh
+aws iam delete-role-policy \
+  --role-name s3-batch-replication-terraform-state \
+  --policy-name batch-replication
+
+aws iam delete-role \
+  --role-name s3-batch-replication-terraform-state
+```
 
 #### Recovering from the replica
 
@@ -201,7 +212,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 
 ```tf
 module "tf_backend_azurerm" {
-  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.0.0"
+  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.0.1"
   project  = "someproject"
   location = "North Europe"
 }
