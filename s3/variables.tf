@@ -16,6 +16,8 @@ variable "replication" {
     enabled                  = optional(bool, false)
     storage_class            = optional(string, "STANDARD")
     replicate_delete_markers = optional(bool, false)
+    metrics                  = optional(bool, true)
+    replication_time         = optional(bool, false)
   })
 
   default = {}

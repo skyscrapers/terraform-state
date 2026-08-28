@@ -17,21 +17,22 @@ Optionally, the state bucket is replicated to a second bucket in another region 
 
 ### Output
 
-| Name                   | Description                                                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------- |
-| bucket\_id             | Id (name) of the S3 bucket                                                                      |
-| replica\_bucket\_arn   | ARN of the replica S3 bucket, null when replication is disabled                                 |
-| replica\_bucket\_id    | Id (name) of the replica S3 bucket, null when replication is disabled                           |
-| replication\_role\_arn | ARN of the IAM role S3 assumes to replicate the state bucket, null when replication is disabled |
-| tf\_policy\_arn        | The ARN of the policy for Terraform users to access the state and S3-native lock files          |
-| tf\_policy\_id         | The ID of the policy for Terraform users to access the state and S3-native lock files           |
-| tf\_policy\_name       | The name of the policy for Terraform users to access the state and S3-native lock files         |
+| Name                             | Description                                                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| bucket\_id                       | Id (name) of the S3 bucket                                                                                                                     |
+| replica\_bucket\_arn             | ARN of the replica S3 bucket, null when replication is disabled                                                                                |
+| replica\_bucket\_id              | Id (name) of the replica S3 bucket, null when replication is disabled                                                                          |
+| replication\_metric\_dimensions | Dimensions (`SourceBucket`, `DestinationBucket`, `RuleId`) for the `AWS/S3` replication CloudWatch metrics, null when replication is disabled |
+| replication\_role\_arn           | ARN of the IAM role S3 assumes to replicate the state bucket, null when replication is disabled                                                |
+| tf\_policy\_arn                  | The ARN of the policy for Terraform users to access the state and S3-native lock files                                                        |
+| tf\_policy\_id                   | The ID of the policy for Terraform users to access the state and S3-native lock files                                                          |
+| tf\_policy\_name                 | The name of the policy for Terraform users to access the state and S3-native lock files                                                        |
 
 ### Example
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.1"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.1.0"
   project = "some-project"
 
   # Required even without replication: alias it to the primary provider.
@@ -72,11 +73,13 @@ When `replication.enabled` is `true`, the module creates:
 
 Replication settings (`replication`):
 
-| Name                       | Description                                                                                |  Type  |   Default    |
-| -------------------------- | ------------------------------------------------------------------------------------------ | :----: | :----------: |
-| enabled                    | Whether to replicate the state bucket                                                      |  bool  |   `false`    |
-| storage\_class             | Storage class of the replicated objects                                                    | string | `"STANDARD"` |
-| replicate\_delete\_markers | Whether to replicate delete markers, so deletes in the state bucket show up in the replica |  bool  |   `false`    |
+| Name                       | Description                                                                                                                                                   |  Type  |   Default    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----: | :----------: |
+| enabled                    | Whether to replicate the state bucket                                                                                                                         |  bool  |   `false`    |
+| storage\_class             | Storage class of the replicated objects                                                                                                                       | string | `"STANDARD"` |
+| replicate\_delete\_markers | Whether to replicate delete markers, so deletes in the state bucket show up in the replica                                                                    |  bool  |   `false`    |
+| metrics                    | Whether to publish S3 Replication Metrics (`OperationsFailedReplication`, `OperationsPendingReplication`, `BytesPendingReplication`, `ReplicationLatency`) to CloudWatch, in the source account and region |  bool  |    `true`    |
+| replication\_time          | Whether to enable S3 Replication Time Control (a 15 minute replication SLA, billed per GB replicated). Implicitly turns `metrics` on too                     |  bool  |   `false`    |
 
 Example, replicating to the `backup` account in `eu-central-1`:
 
@@ -88,7 +91,7 @@ provider "aws" {
 }
 
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.0.1"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.1.0"
   project = "some-project"
 
   replication = {
@@ -212,7 +215,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 
 ```tf
 module "tf_backend_azurerm" {
-  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.0.1"
+  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.1.0"
   project  = "someproject"
   location = "North Europe"
 }

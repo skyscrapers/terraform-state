@@ -200,6 +200,29 @@ resource "aws_s3_bucket_replication_configuration" "state" {
       bucket        = aws_s3_bucket.replica[0].arn
       account       = data.aws_caller_identity.replica[0].account_id
       storage_class = var.replication.storage_class
+
+      # RTC requires metrics to be enabled too, so turn metrics on whenever
+      # either is requested.
+      dynamic "metrics" {
+        for_each = var.replication.metrics || var.replication.replication_time ? [1] : []
+        content {
+          status = "Enabled"
+
+          event_threshold {
+            minutes = 15
+          }
+        }
+      }
+
+      dynamic "replication_time" {
+        for_each = var.replication.replication_time ? [1] : []
+        content {
+          status = "Enabled"
+          time {
+            minutes = 15
+          }
+        }
+      }
     }
   }
 
