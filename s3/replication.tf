@@ -202,14 +202,18 @@ resource "aws_s3_bucket_replication_configuration" "state" {
       storage_class = var.replication.storage_class
 
       # RTC requires metrics to be enabled too, so turn metrics on whenever
-      # either is requested.
+      # either is requested. The API rejects event_threshold unless
+      # replication_time is also enabled, so it can't be set unconditionally.
       dynamic "metrics" {
         for_each = var.replication.metrics || var.replication.replication_time ? [1] : []
         content {
           status = "Enabled"
 
-          event_threshold {
-            minutes = 15
+          dynamic "event_threshold" {
+            for_each = var.replication.replication_time ? [1] : []
+            content {
+              minutes = 15
+            }
           }
         }
       }
