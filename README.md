@@ -8,12 +8,15 @@ Create an S3 bucket to store the Terraform state files, with native S3 state loc
 The bucket has server-side encryption enabled by default and the bucket policy enforces it for all uploads.
 Optionally, the state bucket is replicated to a second bucket in another region and/or another AWS account, for disaster recovery.
 
+Non-current object versions (previous states, kept by S3 versioning) expire after `noncurrent_version_expiration_days` (90 by default), and delete markers with no remaining non-current version behind them are removed too. This lifecycle rule applies to existing objects as well as new ones: history older than the configured window is deleted shortly after the rule is applied, with no manual scrub needed. The same rule is applied to the replica bucket when replication is enabled.
+
 ### Available variables
 
-| Name        | Description                                                            |  Type  | Default | Required |
-| ----------- | ---------------------------------------------------------------------- | :----: | :-----: | :------: |
-| project     | Project name                                                           | string |   n/a   |   yes    |
-| replication | Replication of the state bucket, see [Replication](#replication) below | object |   `{}`  |    no    |
+| Name                                   | Description                                                                                                    |  Type  | Default | Required |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | :----: | :-----: | :------: |
+| project                                | Project name                                                                                                   | string |   n/a   |   yes    |
+| noncurrent\_version\_expiration\_days  | Days after which non-current object versions (and expired delete markers) are permanently deleted, see below  | number |  `90`   |    no    |
+| replication                            | Replication of the state bucket, see [Replication](#replication) below                                        | object |   `{}`  |    no    |
 
 ### Output
 
@@ -32,7 +35,7 @@ Optionally, the state bucket is replicated to a second bucket in another region 
 
 ```tf
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.1.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.2.0"
   project = "some-project"
 
   # Required even without replication: alias it to the primary provider.
@@ -91,7 +94,7 @@ provider "aws" {
 }
 
 module "s3" {
-  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.1.0"
+  source  = "github.com/skyscrapers/terraform-state//s3?ref=7.2.0"
   project = "some-project"
 
   replication = {
@@ -215,7 +218,7 @@ Creates an Azure resource group, a Storage account and a storage container to us
 
 ```tf
 module "tf_backend_azurerm" {
-  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.1.0"
+  source   = "github.com/skyscrapers/terraform-state//azurerm?ref=7.2.0"
   project  = "someproject"
   location = "North Europe"
 }
