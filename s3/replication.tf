@@ -65,6 +65,28 @@ resource "aws_s3_bucket_public_access_block" "replica" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "replica" {
+  count    = local.replication_enabled
+  provider = aws.replica
+  bucket   = aws_s3_bucket.replica[0].id
+
+  rule {
+    id     = "expire-noncurrent-state-versions"
+    status = "Enabled"
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.noncurrent_version_expiration_days
+    }
+
+    expiration {
+      expired_object_delete_marker = true
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.replica]
+}
+
 data "aws_iam_policy_document" "replica" {
   count = local.replication_enabled
 

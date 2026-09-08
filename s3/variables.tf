@@ -2,6 +2,19 @@ variable "project" {
   description = "Project name"
 }
 
+variable "noncurrent_version_expiration_days" {
+  description = <<-EOT
+    Number of days after which non-current object versions are permanently
+    deleted from the state bucket (and its replica, when enabled). Expired
+    delete markers are cleaned up too, so keys whose current version was
+    deleted disappear once their history has expired. Applies to existing
+    objects as well as new ones.
+  EOT
+
+  type    = number
+  default = 90
+}
+
 variable "replication" {
   description = <<-EOT
     Replication of the state bucket to a replica bucket, for disaster recovery.
