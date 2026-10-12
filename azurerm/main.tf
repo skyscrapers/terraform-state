@@ -14,14 +14,15 @@ resource "azurerm_resource_group" "terraform_backend" {
 }
 
 resource "azurerm_storage_account" "terraform_backend" {
-  name                     = "tfbackend${var.project}"
-  resource_group_name      = azurerm_resource_group.terraform_backend.name
-  location                 = azurerm_resource_group.terraform_backend.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS" # i.e. Locally-redundant Storage
-  access_tier              = "Hot"
-  allow_blob_public_access = false
-  tags                     = local.tags
+  name                            = "tfbackend${var.project}"
+  resource_group_name             = azurerm_resource_group.terraform_backend.name
+  location                        = azurerm_resource_group.terraform_backend.location
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS" # i.e. Locally-redundant Storage
+  access_tier                     = "Hot"
+  allow_blob_public_access        = false
+  allow_nested_items_to_be_public = false
+  tags                            = local.tags
 
   blob_properties {
     versioning_enabled = true
