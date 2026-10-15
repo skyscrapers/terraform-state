@@ -20,6 +20,7 @@ resource "azurerm_storage_account" "terraform_backend" {
   account_tier                    = "Standard"
   account_replication_type        = "LRS" # i.e. Locally-redundant Storage
   access_tier                     = "Hot"
+  public_network_access_enabled   = false
   allow_blob_public_access        = false
   allow_nested_items_to_be_public = false
   tags                            = local.tags
